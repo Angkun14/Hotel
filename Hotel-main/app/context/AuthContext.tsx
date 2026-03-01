@@ -10,17 +10,20 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
+  setUser: (user: User | null) => void; // ✅ เพิ่ม
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  setUser: () => {}, // ✅ เพิ่ม
   logout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  // โหลด user จาก localStorage ตอน mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -37,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

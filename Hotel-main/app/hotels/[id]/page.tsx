@@ -17,15 +17,11 @@ export default function HotelDetailsPage() {
   const [hotel, setHotel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [activeTab, setActiveTab] = useState<
-    "details" | "amenities" | "policies"
-  >("details");
-
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  
 
-  // ✅ FETCH DATA FROM BACKEND
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+
   useEffect(() => {
     if (!hotelId) return;
 
@@ -33,22 +29,17 @@ export default function HotelDetailsPage() {
       try {
         setLoading(true);
 
-        // 1. ดึง hotel
         const hotelRes = await fetch(`http://localhost:3001/hotels/${hotelId}`);
         if (!hotelRes.ok) throw new Error("Hotel not found");
         const hotelData = await hotelRes.json();
 
-        // 2. ดึง rooms ของ hotel นี้
         const roomsRes = await fetch(
-          `http://localhost:3001/rooms/hotel/${hotelId}`,
+          `http://localhost:3001/rooms/hotel/${hotelId}`
         );
+        if (!roomsRes.ok) throw new Error("Rooms not found");
         const roomsData = await roomsRes.json();
-        
-        // 3. รวม rooms เข้า hotel
-        setHotel({
-          ...hotelData,
-          rooms: roomsData,
-        });
+
+        setHotel({ ...hotelData, rooms: roomsData });
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -59,73 +50,113 @@ export default function HotelDetailsPage() {
     fetchData();
   }, [hotelId]);
 
-  if (loading) {
-    return <div className="pt-40 text-center">Loading...</div>;
-  }
+  if (loading) return <div className="pt-40 text-center">Loading...</div>;
 
-  if (error || !hotel) {
+  if (error || !hotel)
     return (
-      <div className="pt-40 text-center text-red-500">ไม่พบข้อมูลโรงแรม</div>
+      <div className="pt-40 text-center text-red-500">
+        ไม่พบข้อมูลโรงแรม
+      </div>
     );
-  }
 
-  const selectedRoom = hotel.rooms?.find((r: any) => r._id === selectedRoomId);
+  const selectedRoom = hotel.rooms?.find(
+    (r: any) => r._id === selectedRoomId
+  );
 
-  const taxAndFee = selectedRoom ? selectedRoom.price * 0.17 : 0;
-  const totalPrice = selectedRoom ? selectedRoom.price + taxAndFee : 0;
+  const calculateNights = () => {
+    if (!checkIn || !checkOut) return 0;
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diff =
+      (end.getTime() - start.getTime()) /
+      (1000 * 60 * 60 * 24);
+    return diff > 0 ? diff : 0;
+  };
+
+  const nights = calculateNights();
+  const basePrice = selectedRoom ? selectedRoom.price * nights : 0;
+  const taxAndFee = basePrice * 0.07;
+  const totalPrice = basePrice + taxAndFee;
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] pb-32">
+    <div className="min-h-screen bg-[#F8F6F1] text-[#1A1A1A] pb-32">
       <Header />
 
-      {/* ================= HEADER SECTION ================= */}
-      <div className="max-w-7xl mx-auto px-6 pt-32">
-        <Link href="/" className="text-sm text-slate-500">
-          ← กลับไปหน้าค้นหา
-        </Link>
-
-        <h1 className="text-4xl font-serif mt-4">{hotel.hotelName}</h1>
-
-        <p className="text-slate-500 mt-2">{hotel.location}</p>
-
-        <div className="mt-4 flex gap-4">
-          <span className="text-[#B89146] font-bold">★ {hotel.rating}</span>
-          <span className="text-slate-500">({hotel.reviews} รีวิว)</span>
+      {/* HERO (ไม่มีรูป) */}
+      <div className="relative h-[420px] w-full bg-[#F3EFE7] flex items-center justify-center border-b border-[#E8E1D3]">
+        <div className="text-center">
+          <h1 className="text-5xl font-serif tracking-wide mb-4">
+            {hotel.hotelName}
+          </h1>
+          <p className="tracking-widest uppercase text-sm text-[#B89146]">
+            {hotel.location}
+          </p>
         </div>
       </div>
 
-      {/* ================= ROOMS ================= */}
-      <main className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-12 gap-12">
+      <main className="max-w-7xl mx-auto px-6 mt-20 grid grid-cols-12 gap-16">
+        {/* ห้องพัก */}
         <div className="col-span-8">
-          <h2 className="text-2xl font-serif mb-6">ประเภทห้องพัก</h2>
+          {/* Date Picker */}
+          <div className="mb-10 flex gap-6">
+            <div>
+              <label className="text-xs uppercase tracking-widest block mb-2 text-slate-500">
+                Check-in
+              </label>
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                className="border border-[#E8E1D3] bg-white px-4 py-2"
+              />
+            </div>
 
-          <div className="space-y-4">
+            <div>
+              <label className="text-xs uppercase tracking-widest block mb-2 text-slate-500">
+                Check-out
+              </label>
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                className="border border-[#E8E1D3] bg-white px-4 py-2"
+              />
+            </div>
+          </div>
+
+          <h2 className="text-3xl font-serif mb-8 tracking-wide">
+            Room Selection
+          </h2>
+
+          <div className="space-y-6">
             {hotel.rooms?.map((room: any) => (
               <div
                 key={room._id}
-                className={`border p-6 rounded-lg flex justify-between items-center ${
+                className={`rounded-2xl p-8 flex justify-between items-center transition-all duration-300 ${
                   selectedRoomId === room._id
-                    ? "border-[#B89146]"
-                    : "border-slate-200"
+                    ? "border border-[#B89146] bg-[#FDFBF6] shadow-lg"
+                    : "border border-[#E8E1D3] bg-white hover:shadow-lg"
                 }`}
               >
                 <div>
-                  <h3 className="font-bold text-lg">{room.name}</h3>
+                  <h3 className="font-serif text-xl mb-2">
+                    {room.name}
+                  </h3>
                   <p className="text-sm text-slate-500">
                     {room.size} • {room.capacity}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-[#B89146]">
+                  <p className="text-3xl font-serif text-[#B89146]">
                     ฿{formatBaht(room.price)}
                   </p>
 
                   <button
                     onClick={() => setSelectedRoomId(room._id)}
-                    className="mt-2 border px-4 py-2 text-sm"
+                    className="mt-4 px-8 py-3 text-xs tracking-[0.3em] uppercase border border-black hover:bg-black hover:text-white transition-all"
                   >
-                    เลือกห้อง
+                    Select
                   </button>
                 </div>
               </div>
@@ -133,43 +164,64 @@ export default function HotelDetailsPage() {
           </div>
         </div>
 
-        {/* ================= BOOKING SUMMARY ================= */}
+        {/* Summary */}
         <div className="col-span-4">
-          <div className="sticky top-28 border p-6 rounded-lg bg-white shadow-md">
-            <h3 className="text-lg font-bold mb-4">สรุปการจอง</h3>
+          <div className="sticky top-32 rounded-2xl bg-white p-8 shadow-2xl border border-[#E8E1D3]">
+            <h3 className="text-xl font-serif mb-6 tracking-wide">
+              Booking Summary
+            </h3>
 
             {selectedRoom ? (
               <>
-                <p className="mb-2">{selectedRoom.name}</p>
+                <p className="mb-4 font-medium">
+                  {selectedRoom.name}
+                </p>
 
-                <div className="flex justify-between">
-                  <span>ราคา</span>
-                  <span>฿{formatBaht(selectedRoom.price)}</span>
+                <div className="flex justify-between mb-2">
+                  <span>
+                    {nights} คืน x ฿
+                    {formatBaht(selectedRoom.price)}
+                  </span>
+                  <span>
+                    ฿{formatBaht(basePrice)}
+                  </span>
                 </div>
 
-                <div className="flex justify-between text-sm text-slate-500">
-                  <span>ภาษี 17%</span>
-                  <span>฿{formatBaht(taxAndFee)}</span>
+                <div className="flex justify-between text-sm text-slate-500 mb-4">
+                  <span>Tax 7%</span>
+                  <span>
+                    ฿{formatBaht(taxAndFee)}
+                  </span>
                 </div>
 
-                <div className="flex justify-between mt-4 font-bold text-lg">
-                  <span>รวม</span>
-                  <span>฿{formatBaht(totalPrice)}</span>
+                <div className="flex justify-between font-bold text-lg border-t pt-4">
+                  <span>Total</span>
+                  <span>
+                    ฿{formatBaht(totalPrice)}
+                  </span>
                 </div>
 
                 <button
+                  disabled={
+                    !selectedRoom ||
+                    !checkIn ||
+                    !checkOut ||
+                    nights <= 0
+                  }
                   onClick={() =>
                     router.push(
-                      `/checkout?hotelId=${hotel._id}&roomId=${selectedRoom._id}`,
+                      `/confirm?hotelId=${hotel._id}&roomId=${selectedRoom._id}&checkIn=${checkIn}&checkOut=${checkOut}`
                     )
                   }
-                  className="mt-6 w-full bg-black text-white py-3"
+                  className="mt-8 w-full bg-black text-white py-4 tracking-widest uppercase text-sm hover:bg-[#B89146] transition-all disabled:opacity-50"
                 >
-                  ไปชำระเงิน →
+                  Proceed to Payment →
                 </button>
               </>
             ) : (
-              <p className="text-slate-400">กรุณาเลือกห้องพัก</p>
+              <p className="text-slate-400">
+                Please select a room
+              </p>
             )}
           </div>
         </div>

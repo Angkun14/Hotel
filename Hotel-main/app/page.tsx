@@ -170,25 +170,7 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="flex-1 flex flex-col items-start px-8 py-5 border-b md:border-b-0 md:border-r border-slate-200 group cursor-pointer hover:bg-slate-50 transition-colors">
-                <span className="text-[9px] uppercase tracking-[0.2em] text-[#B89146] font-bold mb-2">Check In</span>
-                <input
-                  type="date"
-                  className="w-full text-[15px] font-serif outline-none text-[#1A1A1A] bg-transparent cursor-pointer uppercase"
-                  value={filters.checkIn}
-                  onChange={(e) => setFilters({ ...filters, checkIn: e.target.value })}
-                />
-              </div>
-
-              <div className="flex-1 flex flex-col items-start px-8 py-5 group cursor-pointer hover:bg-slate-50 transition-colors">
-                <span className="text-[9px] uppercase tracking-[0.2em] text-[#B89146] font-bold mb-2">Check Out</span>
-                <input
-                  type="date"
-                  className="w-full text-[15px] font-serif outline-none text-[#1A1A1A] bg-transparent cursor-pointer uppercase"
-                  value={filters.checkOut}
-                  onChange={(e) => setFilters({ ...filters, checkOut: e.target.value })}
-                />
-              </div>
+            
 
               <button 
                 onClick={handleSearch}

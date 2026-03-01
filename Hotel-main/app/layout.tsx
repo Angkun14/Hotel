@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LUXE | Selection - Luxury Hotel Reservations",
-  description: "Experience the ultimate luxury Selection with LUXE Selection.",
+  description: "Experience the ultimate luxury selection with LUXE Selection.",
 };
 
 export default function RootLayout({
@@ -31,13 +31,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Header />
+          <div className="min-h-screen flex flex-col">
 
-          {/* กัน Header fixed ทับเนื้อหา */}
-          <main className="pt-[88px]">
-            {children}
-          </main>
+            {/* Fixed Header */}
+            <Header />
 
+            {/* Content */}
+            <main className="flex-1 pt-24">
+              {children}
+            </main>
+
+          </div>
         </AuthProvider>
       </body>
     </html>
